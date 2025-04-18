@@ -231,7 +231,8 @@ ASBRContext::Node* ASBRContext::returnConnected( const ASBRContext::vertex& q_ne
 }
 
 /* Self-Written Method */
-/* The Most Important Function: The Main RRT Method for Path Planning */
+/* The Most Important Function: The Main RRT Method for Path Planning. This is Bi-directional RRT, where two trees are grown 
+for faster speed in finding the goal. */
 ASBRContext::path ASBRContext::rrt( const ASBRContext::vertex& q_init,
 				    const ASBRContext::vertex& q_goal ){
   ASBRContext::path P;
@@ -312,7 +313,8 @@ ASBRContext::path ASBRContext::rrt( const ASBRContext::vertex& q_init,
 
           } else {
 
-            P2 = qinit_tree->reconstructPath(otherSuccess);
+            // We always want P1 to represent the path from q_init, and P2 the path to q_goal
+            P2 = qinit_tree->reconstructPath(otherSuccess); 
             P1 = qinit_tree->reconstructPath(q_new_node);
 
           }
@@ -484,27 +486,29 @@ ASBRContext::path ASBRContext::NAry_Tree::reconstructPath(const ASBRContext::Nod
   // Base Case: If you reach the root node, return a path datatype that has only 
   // the root node in its vector. 
 
-  // Initialize a path datatype. Only place the input parameter config in this path datatype. 
+  // Initialize a path datatype (P). Only place the input parameter config in this path datatype. 
+  // Set another path datatype (called reconstructedPath)
 
   // Recursive Case: 
   // If the node currently being examined has a parent, 
-      // Set a new path datatype equal to the call of reconstructPath on this node's parent
-      // Add the result of this recursive call to the path datatype initialized before the recursive case. 
+      // Set reconstructedPath equal to the call of reconstructPath on this node's parent
+      // Add the result of this recursive call to the path datatype (P) initialized before the recursive case. 
+      // Add it before the path datatype P, so that the order of the path is [root -> *nodes in between* -> config]
 
-  // Return that initial path datatype. 
+  // Return that reconstructedPath 
 
   ASBRContext::path P;
   P.push_back(config->data);
   ASBRContext::path reconstructedPath;
 
   if (config->parent == nullptr) {
-
+    // Only the root node has no parent.
     return P;
 
   } else {
 
     reconstructedPath = reconstructPath(config->parent);
-    reconstructedPath.insert(reconstructedPath.end(), P.begin(), P.end());
+    reconstructedPath.insert(reconstructedPath.end(), P.begin(), P.end()); 
 
   }
 
